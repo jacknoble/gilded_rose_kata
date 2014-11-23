@@ -4,10 +4,6 @@ class ItemWrapper
     @item = item
   end
 
-  def name
-    item.name
-  end
-
   def sell_in
     item.sell_in
   end
@@ -25,63 +21,58 @@ class ItemWrapper
     end
   end
 
-  def backstage_update
-    if sell_in < 6
-      self.quality += 3
-    elsif sell_in < 11
-      self.quality += 2
-    else
-      self.quality += 1
-    end
-    self.sell_in -= 1
-    self.quality = 0 if sell_in < 0
+  def quality
+    item.quality
   end
+end
 
-  def brie_update
-    self.sell_in -= 1
-    if sell_in < 0
-      self.quality += 2
-    else
-      self.quality += 1
-    end
-  end
-
-  def sulfuras_update
+class Sulfuras < ItemWrapper
+  def update_quality
     self.quality += 1
   end
+end
 
-  def normal_update
+class Normal < ItemWrapper
+  def update_quality
     self.quality -= 1
     self.sell_in -= 1
     if sell_in < 0
       self.quality -= 1
     end
   end
+end
 
-  def quality
-    item.quality
+class AgedBrie < ItemWrapper
+  def update_quality
+    self.sell_in -= 1
+    if sell_in < 0
+      self.quality += 2
+    else
+      self.quality += 1
+    end
   end
 end
 
+class BackstagePass < ItemWrapper
+  def update_quality
+    self.quality += 1
+    self.quality += 1 if sell_in < 11
+    self.quality += 1 if sell_in < 6
+    self.sell_in -= 1
+    self.quality = 0 if sell_in < 0
+  end
+end
+
+ITEM_CLASSES = {
+  'Backstage passes to a TAFKAL80ETC concert' => BackstagePass,
+  'Aged Brie' => AgedBrie,
+  'Sulfuras, Hand of Ragnaros' => Sulfuras
+}.freeze
+
 def update_quality(items)
   items.each do |item|
-    item = ItemWrapper.new(item)
-    if item.name == 'Backstage passes to a TAFKAL80ETC concert'
-      item.backstage_update
-      return
-    end
-
-    if item.name == 'Aged Brie'
-      item.brie_update
-      return
-    end
-
-    if item.name == 'Sulfuras, Hand of Ragnaros'
-      item.sulfuras_update
-      return
-    end
-
-    item.normal_update
+    item = ITEM_CLASSES.fetch(item.name, Normal).new(item)
+    item.update_quality
   end
 end
 
