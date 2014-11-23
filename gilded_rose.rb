@@ -63,10 +63,22 @@ class BackstagePass < ItemWrapper
   end
 end
 
+class Conjured < ItemWrapper
+  def update_quality
+    self.sell_in -= 1
+    if sell_in > 0
+      self.quality -= 2
+    else
+      self.quality -= 4
+    end
+  end
+end
+
 ITEM_CLASSES = {
   'Backstage passes to a TAFKAL80ETC concert' => BackstagePass,
   'Aged Brie' => AgedBrie,
-  'Sulfuras, Hand of Ragnaros' => Sulfuras
+  'Sulfuras, Hand of Ragnaros' => Sulfuras,
+  "Conjured Mana Cake" => Conjured
 }.freeze
 
 def update_quality(items)
