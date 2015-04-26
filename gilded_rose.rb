@@ -72,6 +72,9 @@ class AgedBrie < ItemWrapper
 end
 
 class BackstagePass < ItemWrapper
+  LONG_OFF_QUALITY_INCREASE = 1
+  APPROACHING_QUALITY_INCREASE = 2
+  IMMINENT_QUALITY_INCREASE = 3
   def update_quality
     age_item
     if expired?
@@ -79,9 +82,9 @@ class BackstagePass < ItemWrapper
     end
     self.quality +=
       case sell_in
-      when 10..Float::INFINITY then 1
-      when 5..10 then 2
-      when 0..5 then 3
+      when 10..Float::INFINITY then LONG_OFF_QUALITY_INCREASE
+      when 5..10 then APPROACHING_QUALITY_INCREASE
+      when 0..5 then IMMINENT_QUALITY_INCREASE
       end
   end
 end
