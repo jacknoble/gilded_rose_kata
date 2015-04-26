@@ -1,5 +1,9 @@
 class ItemWrapper
+  MAX_QUALITY = 50
+  MINIMUM_QUALITY = 0
+
   attr_accessor :item
+
   def initialize(item)
     @item = item
   end
@@ -8,21 +12,29 @@ class ItemWrapper
     item.sell_in
   end
 
-  def sell_in=(n)
-    item.sell_in = n
+  def sell_in=(days)
+    item.sell_in = days
   end
 
-  def quality=(n)
+  def quality=(level)
     original_quality = item.quality
-    item.quality = n
-    item.quality = 0 if item.quality < 0
-    if item.quality > 50
-      item.quality = [original_quality, 50].max
+    item.quality = level
+    item.quality = MINIMUM_QUALITY if item.quality < MINIMUM_QUALITY
+    if item.quality > MAX_QUALITY
+      item.quality = [original_quality, MAX_QUALITY].max
     end
   end
 
   def quality
     item.quality
+  end
+
+  def expired?
+    sell_in < 0
+  end
+
+  def age_item
+    self.sell_in -= 1
   end
 end
 
@@ -33,43 +45,56 @@ class Sulfuras < ItemWrapper
 end
 
 class Normal < ItemWrapper
+  EXPIRED_QUALITY_LOSS = 2
+  UNEXPIRED_QUALITY_LOSS = 1
   def update_quality
-    self.quality -= 1
-    self.sell_in -= 1
-    if sell_in < 0
-      self.quality -= 1
+    age_item
+    if expired?
+      self.quality -= EXPIRED_QUALITY_LOSS
+    else
+      self.quality -= UNEXPIRED_QUALITY_LOSS
     end
   end
 end
 
 class AgedBrie < ItemWrapper
+  EXPIRED_QUALITY_GAIN = 2
+  UNEXPIRED_QUALITY_GAIN = 1
+
   def update_quality
-    self.sell_in -= 1
-    if sell_in < 0
-      self.quality += 2
+    age_item
+    if expired?
+      self.quality += EXPIRED_QUALITY_GAIN
     else
-      self.quality += 1
+      self.quality += UNEXPIRED_QUALITY_GAIN
     end
   end
 end
 
 class BackstagePass < ItemWrapper
   def update_quality
-    self.quality += 1
-    self.quality += 1 if sell_in < 11
-    self.quality += 1 if sell_in < 6
-    self.sell_in -= 1
-    self.quality = 0 if sell_in < 0
+    age_item
+    if expired?
+      self.quality = 0 and return
+    end
+    self.quality +=
+      case sell_in
+      when 10..Float::INFINITY then 1
+      when 5..10 then 2
+      when 0..5 then 3
+      end
   end
 end
 
 class Conjured < ItemWrapper
+  EXPIRED_QUALITY_LOSS = 4
+  UNEXPIRED_QUALITY_LOSS = 2
   def update_quality
-    self.sell_in -= 1
-    if sell_in > 0
-      self.quality -= 2
+    age_item
+    if expired?
+      self.quality -= EXPIRED_QUALITY_LOSS
     else
-      self.quality -= 4
+      self.quality -= UNEXPIRED_QUALITY_LOSS
     end
   end
 end
